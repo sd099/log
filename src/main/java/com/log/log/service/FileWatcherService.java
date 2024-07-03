@@ -49,20 +49,34 @@ public class FileWatcherService {
         long position = length;
         int lines = 0;
         List<Message> lastTenLines = new ArrayList<>();
+        long lastNewLinePosition = length;
 
         while (position > 0) {
             position--;
             randomAccessFile.seek(position);
             if (randomAccessFile.readByte() == '\n') {
-                lines++;
-                if (lines <= 10) {
+                if (lines < 10) {
+                    lines++;
+                    long currentLineStart = position + 1;
+                    randomAccessFile.seek(currentLineStart);
                     String line = "{\"content\":\"" + randomAccessFile.readLine() + "\"}";
                     lastTenLines.add(0, new Message(line));
+                    lastNewLinePosition = position;
                 } else {
                     break;
                 }
             }
         }
+
+        // Handle the case where the first line in the file does not end with a newline
+        if (lines < 10 && lastNewLinePosition > 0) {
+            randomAccessFile.seek(0);
+            String line = "{\"content\":\"" + randomAccessFile.readLine() + "\"}";
+            lastTenLines.add(0, new Message(line));
+        }
+
         return lastTenLines;
     }
+
+
 }
