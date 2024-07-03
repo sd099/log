@@ -1,34 +1,44 @@
 <html lang="en">
-<head>
-    <title>File Watcher</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <head>
+        <title>File Watcher</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
-    <script>
-        let client = null
-        let socket = new SockJS("/logs")
-        client = Stomp.over(socket)
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                // Fetch the last 10 lines on page load
+                fetch("/initialLog")
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(line => {
+                            print(JSON.parse(line.content));
+                        });
 
-        client.connect({}, function(frame){
-            console.log("Connected !!")
+                        // After loading initial logs, set up WebSocket for real-time updates
+                        let socket = new SockJS("/logs");
+                        let client = Stomp.over(socket);
 
-            client.subscribe("/topic/log", function (data) {
-                print(JSON.parse(data.body))
-            })
-        })
+                        client.connect({}, function (frame) {
+                            console.log("Connected !!");
 
-        function print(message) {
-            let log = document.getElementById("logs")
-            let newLogs = document.createElement("p")
+                            client.subscribe("/topic/log", function (data) {
+                                print(JSON.parse(data.body));
+                            });
+                        });
+                    })
+            });
 
-            newLogs.appendChild(document.createTextNode(message.content))
-            log.appendChild(newLogs)
-        }
+            function print(message) {
+                let log = document.getElementById("logs");
+                let newLogs = document.createElement("p");
 
-    </script>
-</head>
-<body>
-<h1>File Watcher Service</h1>
-<p id="logs"></p>
-</body>
+                newLogs.appendChild(document.createTextNode(message.content));
+                log.appendChild(newLogs);
+            }
+        </script>
+    </head>
+    <body>
+        <h1>File Watcher Service</h1>
+        <div id="logs"></div>
+    </body>
 </html>

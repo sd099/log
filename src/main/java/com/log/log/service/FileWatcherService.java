@@ -1,18 +1,20 @@
 package com.log.log.service;
 
+import com.log.log.model.Message;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
-
 @Component
 public class FileWatcherService {
-    private final static String FILE_NAME = "log.txt";
-    private final static String READ_MODE = "r";
-    public static final String DESTINATION = "/topic/log";
+    private static final String FILE_NAME = "log.txt";
+    private static final String READ_MODE = "r";
+    private static final String DESTINATION = "/topic/log";
     private long offset;
 
     private final RandomAccessFile randomAccessFile;
@@ -22,38 +24,45 @@ public class FileWatcherService {
 
     public FileWatcherService() throws IOException {
         randomAccessFile = new RandomAccessFile(FILE_NAME, READ_MODE);
-
-        offset = initialOffset();
+        offset = randomAccessFile.length();
     }
 
     @Scheduled(fixedDelay = 100, initialDelay = 5000)
     public void sendUpdates() throws IOException {
         long fileLength = randomAccessFile.length();
+        if (fileLength < offset) {
+            offset = 0;
+        }
 
         randomAccessFile.seek(offset);
 
-        while (randomAccessFile.getFilePointer() < fileLength) {
-            String latestFileData = randomAccessFile.readLine();
-            String payload = "{\"content\":\"" + latestFileData + "\"}";
-
-            messagingTemplate
-                    .convertAndSend(DESTINATION, payload);
+        String line;
+        while ((line = randomAccessFile.readLine()) != null) {
+            String payload = "{\"content\":\"" + line + "\"}";
+            messagingTemplate.convertAndSend(DESTINATION, payload);
+            offset = randomAccessFile.getFilePointer();
         }
-
-        offset = fileLength;
     }
 
-    private long initialOffset() throws IOException {
-        int lineCount = 0;
+    public List<Message> getLastTenLines() throws IOException {
+        long length = randomAccessFile.length();
+        long position = length;
+        int lines = 0;
+        List<Message> lastTenLines = new ArrayList<>();
 
-        while (randomAccessFile.readLine() != null) {
-            lineCount++;
+        while (position > 0) {
+            position--;
+            randomAccessFile.seek(position);
+            if (randomAccessFile.readByte() == '\n') {
+                lines++;
+                if (lines <= 10) {
+                    String line = "{\"content\":\"" + randomAccessFile.readLine() + "\"}";
+                    lastTenLines.add(0, new Message(line));
+                } else {
+                    break;
+                }
+            }
         }
-
-        if(lineCount > 10) {
-            offset = lineCount - 10;
-        }
-
-        return offset;
+        return lastTenLines;
     }
 }
