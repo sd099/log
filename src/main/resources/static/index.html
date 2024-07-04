@@ -11,7 +11,7 @@
                     .then(response => response.json())
                     .then(data => {
                         data.forEach(line => {
-                            print(JSON.parse(line.content));
+                            print(JSON.parse(line));
                         });
 
                         // After loading initial logs, set up WebSocket for real-time updates

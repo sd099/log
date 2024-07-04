@@ -18,7 +18,7 @@ public class FileWatcherController {
 
     @GetMapping("/initialLog")
     @ResponseBody
-    public List<Message> getInitialLog() throws IOException {
+    public List<String> getInitialLog() throws IOException {
         return fileWatcherService.getLastTenLines();
     }
 

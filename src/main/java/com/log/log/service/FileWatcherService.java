@@ -1,6 +1,5 @@
 package com.log.log.service;
 
-import com.log.log.model.Message;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -29,11 +28,6 @@ public class FileWatcherService {
 
     @Scheduled(fixedDelay = 100, initialDelay = 5000)
     public void sendUpdates() throws IOException {
-        long fileLength = randomAccessFile.length();
-        if (fileLength < offset) {
-            offset = 0;
-        }
-
         randomAccessFile.seek(offset);
 
         String line;
@@ -44,11 +38,11 @@ public class FileWatcherService {
         }
     }
 
-    public List<Message> getLastTenLines() throws IOException {
+    public List<String> getLastTenLines() throws IOException {
         long length = randomAccessFile.length();
         long position = length;
         int lines = 0;
-        List<Message> lastTenLines = new ArrayList<>();
+        List<String> lastTenLines = new ArrayList<>();
         long lastNewLinePosition = length;
 
         while (position > 0) {
@@ -60,7 +54,7 @@ public class FileWatcherService {
                     long currentLineStart = position + 1;
                     randomAccessFile.seek(currentLineStart);
                     String line = "{\"content\":\"" + randomAccessFile.readLine() + "\"}";
-                    lastTenLines.add(0, new Message(line));
+                    lastTenLines.add(0, line);
                     lastNewLinePosition = position;
                 } else {
                     break;
@@ -72,7 +66,7 @@ public class FileWatcherService {
         if (lines < 10 && lastNewLinePosition > 0) {
             randomAccessFile.seek(0);
             String line = "{\"content\":\"" + randomAccessFile.readLine() + "\"}";
-            lastTenLines.add(0, new Message(line));
+            lastTenLines.add(0, line);
         }
 
         return lastTenLines;
