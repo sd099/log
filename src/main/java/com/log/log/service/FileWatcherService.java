@@ -32,7 +32,7 @@ public class FileWatcherService {
 
         String line;
         while ((line = randomAccessFile.readLine()) != null) {
-            String payload = "{\"content\":\"" + line + "\"}";
+            String payload = line;
             messagingTemplate.convertAndSend(DESTINATION, payload);
             offset = randomAccessFile.getFilePointer();
         }
@@ -53,7 +53,7 @@ public class FileWatcherService {
                     lines++;
                     long currentLineStart = position + 1;
                     randomAccessFile.seek(currentLineStart);
-                    String line = "{\"content\":\"" + randomAccessFile.readLine() + "\"}";
+                    String line = randomAccessFile.readLine();
                     lastTenLines.add(0, line);
                     lastNewLinePosition = position;
                 } else {
@@ -65,7 +65,7 @@ public class FileWatcherService {
         // Handle the case where the first line in the file does not end with a newline
         if (lines < 10 && lastNewLinePosition > 0) {
             randomAccessFile.seek(0);
-            String line = "{\"content\":\"" + randomAccessFile.readLine() + "\"}";
+            String line = randomAccessFile.readLine();
             lastTenLines.add(0, line);
         }
 

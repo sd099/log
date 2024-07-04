@@ -11,7 +11,7 @@
                     .then(response => response.json())
                     .then(data => {
                         data.forEach(line => {
-                            print(JSON.parse(line));
+                            print(line);
                         });
 
                         // After loading initial logs, set up WebSocket for real-time updates
@@ -22,7 +22,7 @@
                             console.log("Connected !!");
 
                             client.subscribe("/topic/log", function (data) {
-                                print(JSON.parse(data.body));
+                                print(data.body);
                             });
                         });
                     })
@@ -32,7 +32,7 @@
                 let log = document.getElementById("logs");
                 let newLogs = document.createElement("p");
 
-                newLogs.appendChild(document.createTextNode(message.content));
+                newLogs.appendChild(document.createTextNode(message));
                 log.appendChild(newLogs);
             }
         </script>

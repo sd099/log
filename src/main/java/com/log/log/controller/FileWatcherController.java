@@ -22,9 +22,9 @@ public class FileWatcherController {
         return fileWatcherService.getLastTenLines();
     }
 
-    @MessageMapping("/logs")
-    @SendTo("/topic/log")
-    public Message getLogUpdates(Message message) {
-        return message;
-    }
+//    @MessageMapping("/logs")
+//    @SendTo("/topic/log")
+//    public Message getLogUpdates(Message message) {
+//        return message;
+//    }
 }
